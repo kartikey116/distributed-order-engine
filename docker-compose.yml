@@ -1,0 +1,120 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: order-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: orders_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
+
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d orders_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  redpanda:
+    image: redpandadata/redpanda:v25.2.1
+    container_name: order-redpanda
+    restart: unless-stopped
+
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - "1G"
+      - --reserve-memory
+      - "0M"
+      - --node-id
+      - "0"
+      - --check=false
+
+    # Kafka listeners
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092  
+    
+    # What clients should use to reach Redpanda
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+
+    ports:
+      - "19092:19092"
+      - "9644:9644"
+
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
+
+  redis:
+    image: redis:8
+    container_name: order-redis
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+
+  connect:
+    image: quay.io/debezium/connect:3.0.0.Final
+    container_name: order-debezium
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+
+    environment:
+      BOOTSTRAP_SERVERS: redpanda:9092
+
+      GROUP_ID: 1
+
+      CONFIG_STORAGE_TOPIC: debezium_configs
+      OFFSET_STORAGE_TOPIC: debezium_offsets
+      STATUS_STORAGE_TOPIC: debezium_statuses
+
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+
+    ports:
+      - "8083:8083"
+
+
+volumes:
+  postgres_data:
+  redpanda_data:
+  redis_data:

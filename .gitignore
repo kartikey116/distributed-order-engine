@@ -1,3 +1,5 @@
 .env
 services/order-service/node_modules/
 services/order-service/package-lock.json
+node_modules/
+services/order-service/dist/
