@@ -343,6 +343,7 @@ sequenceDiagram
     P->>P: Process Payment
     I->>I: Reserve Inventory
     N->>N: Send Notification
+```
 
 ## Transactional Outbox Flow
 The critical transaction is:
@@ -367,6 +368,7 @@ flowchart TD
 
     Order -. Failure .-> Rollback
     Outbox -. Failure .-> Rollback
+```
 
 ## CDC Flow
 PostgreSQL uses a Write-Ahead Log.
