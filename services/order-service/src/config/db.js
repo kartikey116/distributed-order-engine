@@ -1,5 +1,5 @@
-import dotenv from dotenv;
-import {Pool} from pg;
+import dotenv from 'dotenv';
+import { Pool } from 'pg';
 
 dotenv.config();
 
@@ -15,4 +15,4 @@ pool.on("error", (err) => {
     console.error("Unexpected PostgreSQL error:", err);
 });
 
-module.exports = pool;
+export default pool;
