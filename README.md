@@ -93,8 +93,9 @@ PostgreSQL          Kafka
    |                  |
    |                  |
 Save Order       Publish Event
+```
 
-
+```mermaid
 sequenceDiagram
     participant C as Client
     participant O as Order Service
@@ -110,6 +111,7 @@ sequenceDiagram
     K-->>O: FAILURE
 
     O-->>C: What should happen?
+```
 
 The order exists, but the event was lost.
 The opposite failure is also possible:
@@ -123,6 +125,8 @@ Instead of directly writing to PostgreSQL and Redpanda independently, the Order 
 1. The business entity.
 2. The event that represents the state change.
 into PostgreSQL within the same database transaction.
+
+```mermaid
 flowchart LR
 
     Client --> OrderService
@@ -141,6 +145,7 @@ flowchart LR
     Redpanda --> Payment
     Redpanda --> Inventory
     Redpanda --> Notification
+```
 
 ## Key Objectives
 The system is designed around the following objectives:
@@ -162,6 +167,7 @@ Use historical operational knowledge and AI to diagnose incidents.
 ## 🏗 Architecture
 ### High-Level Architecture
 
+```mermaid
 flowchart TB
 
     Client["Client / API Consumer"]
@@ -205,8 +211,11 @@ flowchart TB
     Payment --> DB
     Inventory --> DB
     Notification --> DB
+```
 
 ### 🌐 Complete System Architecture
+
+```mermaid
 flowchart TB
 
     subgraph ClientLayer["Client Layer"]
@@ -300,10 +309,12 @@ flowchart TB
     RAG --> Agent
     Agent --> Policy
     Policy --> Remediation
+```
 
 ## Complete System Flow
 When a client creates an order:
 
+```mermaid
 sequenceDiagram
 
     participant C as Client
@@ -347,6 +358,8 @@ sequenceDiagram
 
 ## Transactional Outbox Flow
 The critical transaction is:
+
+```mermaid
 flowchart TD
 
     Request["POST /orders"]
@@ -373,6 +386,8 @@ flowchart TD
 ## CDC Flow
 PostgreSQL uses a Write-Ahead Log.
 The simplified flow is:
+
+```text
 PostgreSQL Transaction
         |
         v
@@ -386,6 +401,7 @@ Redpanda
         |
         v
 Consumers
+```
 
 ### WAL
 WAL stands for:
