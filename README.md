@@ -1,46 +1,9 @@
-# 🚀 Distributed Transactional Outbox & AI-Assisted Order Processing Platform
+# Distributed Transactional Outbox & AI-Assisted Order Processing Platform
 
 > A fault-tolerant, event-driven distributed order processing platform built with Node.js, PostgreSQL, Debezium CDC, Redpanda, Redis, Docker, and an AI-powered incident response layer.
-
 ---
 
-## 📌 Table of Contents
-
-- [Overview](#-overview)
-- [Problem Statement](#-problem-statement)
-- [Solution](#-solution)
-- [Key Objectives](#-key-objectives)
-- [Architecture](#-architecture)
-- [Complete System Flow](#-complete-system-flow)
-- [Transactional Outbox Flow](#-transactional-outbox-flow)
-- [CDC Flow](#-cdc-flow)
-- [Event Processing Flow](#-event-processing-flow)
-- [Idempotency Flow](#-idempotency-flow)
-- [Retry and DLQ Flow](#-retry-and-dlq-flow)
-- [AI Incident Response Architecture](#-ai-incident-response-architecture)
-- [Technology Stack](#-technology-stack)
-- [Project Structure](#-project-structure)
-- [Infrastructure](#-infrastructure)
-- [Database Design](#-database-design)
-- [Services](#-services)
-- [API](#-api)
-- [Event Schema](#-event-schema)
-- [Reliability Model](#-reliability-model)
-- [Failure Scenarios](#-failure-scenarios)
-- [Observability](#-observability)
-- [AI/RAG Layer](#-airag-layer)
-- [Security](#-security)
-- [Local Development](#-local-development)
-- [Testing](#-testing)
-- [Implementation Phases](#-implementation-phases)
-- [Performance Goals](#-performance-goals)
-- [Future Improvements](#-future-improvements)
-- [Interview Talking Points](#-interview-talking-points)
-- [License](#-license)
-
----
-
-# 🧠 Overview
+# Overview
 
 The **Distributed Transactional Outbox & AI-Assisted Order Processing Platform** is a production-oriented distributed backend system designed to solve reliability and consistency problems that occur when multiple microservices communicate through asynchronous events.
 
@@ -71,7 +34,7 @@ The core objective is:
 
 ---
 
-# ❗ Problem Statement
+# Problem Statement
 
 In a distributed system, an Order Service often needs to perform two operations:
 
@@ -213,7 +176,7 @@ flowchart TB
     Notification --> DB
 ```
 
-### 🌐 Complete System Architecture
+### Complete System Architecture
 
 ```mermaid
 flowchart TB
