@@ -26,6 +26,32 @@ const pool = new Pool({
     database: process.env.DB_NAME,
 });
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function withRetry(operation, maxAttempts = 5) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            await operation();
+            return; // Success
+        } catch (error) {
+            if (error.isPermanent) {
+                throw error; // Don't retry permanent errors
+            }
+            if (attempt === maxAttempts) {
+                throw new Error(`Operation failed after ${maxAttempts} attempts: ${error.message}`);
+            }
+            
+            // Exponential backoff: 1s, 2s, 4s, 8s
+            const baseMs = Math.pow(2, attempt - 1) * 1000;
+            const jitterMs = Math.floor(Math.random() * (baseMs * 0.2)); // up to 20% jitter
+            const waitMs = baseMs + jitterMs;
+            
+            console.log(`  ⚠️ [Inventory] Transient failure simulated: ${error.message}. Retrying in ${waitMs}ms (Attempt ${attempt + 1} of ${maxAttempts})...`);
+            await sleep(waitMs);
+        }
+    }
+}
+
 function parseEventPayload(rawValue) {
     if (!rawValue) {
         throw new Error('Message value is empty');
@@ -118,14 +144,24 @@ async function run() {
                     throw dbError; // Rethrow other database errors
                 }
                 
-                console.log(`- User ID: ${event.userId}`);
-                console.log(`- Amount: $${event.amount}`);
-                console.log(`- Status: ${event.status}`);
+                // --- BUSINESS LOGIC WITH RETRY ---
+                await withRetry(async () => {
+                    // Random 30% chance to simulate a transient failure to demonstrate retries
+                    if (Math.random() < 0.3) {
+                        const err = new Error("Database deadlock");
+                        err.isPermanent = false;
+                        throw err;
+                    }
 
-                // Simulate inventory processing
-                console.log(
-                    `  ✔️ Inventory reserved for order ${orderId}`
-                );
+                    console.log(`- User ID: ${event.userId}`);
+                    console.log(`- Amount: $${event.amount}`);
+                    console.log(`- Status: ${event.status}`);
+
+                    // Simulate inventory processing
+                    console.log(
+                        `  ✔️ Inventory reserved for order ${orderId}`
+                    );
+                });
 
             } catch (error) {
                 console.error(
