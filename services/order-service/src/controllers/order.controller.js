@@ -17,11 +17,12 @@ export class OrderController {
                 });
             }
 
-            const order = await OrderService.createOrder(userId, amount);
+            const order = await OrderService.createOrder(userId, amount, req.correlationId);
 
             res.status(201).json({
                 message: "Order created successfully",
                 order,
+                correlationId: req.correlationId
             });
         } catch (error) {
             console.error("Failed to create order:", error);

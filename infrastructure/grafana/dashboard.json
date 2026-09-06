@@ -1,0 +1,45 @@
+{
+  "title": "Distributed Order Engine - Chaos Dashboard",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Orders Created (API)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "rate(order_service_orders_created_total[30s])", "legendFormat": "Orders/sec" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Events Processed by Consumers",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "rate(payment_service_events_processed_total[30s])", "legendFormat": "Payment" },
+        { "expr": "rate(inventory_service_events_processed_total[30s])", "legendFormat": "Inventory" },
+        { "expr": "rate(notification_service_events_processed_total[30s])", "legendFormat": "Notification" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Consumer Retries (Transient Failures)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "rate(payment_service_consumer_retries_total[30s])", "legendFormat": "Payment Retries" },
+        { "expr": "rate(inventory_service_consumer_retries_total[30s])", "legendFormat": "Inventory Retries" },
+        { "expr": "rate(notification_service_consumer_retries_total[30s])", "legendFormat": "Notification Retries" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Dead Letter Queue (Permanent Failures)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "rate(payment_service_dlq_sent_total[30s])", "legendFormat": "Payment DLQ" },
+        { "expr": "rate(inventory_service_dlq_sent_total[30s])", "legendFormat": "Inventory DLQ" },
+        { "expr": "rate(notification_service_dlq_sent_total[30s])", "legendFormat": "Notification DLQ" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "refresh": "5s"
+}

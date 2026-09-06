@@ -25,3 +25,22 @@ curl.exe -X POST "http://localhost:8083/connectors" `
  curl.exe -X POST "http://localhost:3000/orders" -H "Content-Type: application/json" -d '{\"userId\":\"550e8400-e29b-41d4-a716-446655440000\",\"amount\":1499.99}'
 
 ## "Debezium captures the outbox insert from PostgreSQL, and the Outbox Event Router transforms that CDC record into an application event on the ORDER.events topic. The routed event uses the aggregate ID as the Kafka key, the outbox ID as the event ID header, and the outbox payload as the event value."
+
+
+curl.exe -s http://localhost:8083/connectors/outbox-connector/status
+curl.exe -s -X POST http://localhost:8083/connectors/outbox-connector/tasks/0/restart
+
+# Stop a single container
+docker stop order-postgres
+
+# Stop multiple containers at once
+docker stop order-postgres order-redpanda
+
+# Stop ALL containers defined in docker-compose.yml
+docker compose stop
+
+# Stop AND remove containers (but keeps volumes/data)
+docker compose down
+
+# Stop AND remove everything including volumes (DELETES ALL DATA)
+docker compose down -v

@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import pool from '../config/db.js';
+import { logger } from '../utils/logger.js';
+import { ordersCreatedTotal } from '../utils/metrics.js';
 
 export class OrderService {
     /**
@@ -9,7 +11,7 @@ export class OrderService {
      * This guarantees that the business state and the event
      * record are committed atomically.
      */
-    static async createOrder(userId, amount) {
+    static async createOrder(userId, amount, correlationId = 'unknown') {
         const client = await pool.connect();
 
         const orderId = uuidv4();
@@ -46,7 +48,8 @@ export class OrderService {
                 userId: createdOrder.user_id,
                 amount: createdOrder.amount,
                 status: createdOrder.status,
-                timestamp: createdOrder.created_at
+                timestamp: createdOrder.created_at,
+                correlationId
             };
 
             // 3. Store the event in the outbox
@@ -72,10 +75,14 @@ export class OrderService {
             // 4. Atomically commit order + event
             await client.query('COMMIT');
 
+            logger.info({ correlationId, orderId }, 'Successfully committed order and outbox event to PostgreSQL');
+            ordersCreatedTotal.inc();
+
             return createdOrder;
 
         } catch (error) {
             await client.query('ROLLBACK');
+            logger.error({ correlationId, error: error.message }, 'Failed to create order, transaction rolled back');
             throw error;
 
         } finally {
