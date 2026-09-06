@@ -133,7 +133,7 @@ flowchart LR
 
     OrderService --> Transaction
 
-    subgraph Transaction["PostgreSQL Transaction"]
+    subgraph DBTx["PostgreSQL Transaction"]
         Transaction --> Orders[(orders)]
         Transaction --> Outbox[(outbox_events)]
     end
