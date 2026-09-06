@@ -16,6 +16,7 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId });
+const producer = kafka.producer();
 
 const pool = new Pool({
     host: process.env.DB_HOST,
@@ -90,6 +91,7 @@ function parseEventPayload(rawValue) {
 
 async function run() {
     await consumer.connect();
+    await producer.connect();
 
     console.log(
         `✅ Payment Service connected to Redpanda (${brokers.join(',')})`
@@ -163,6 +165,29 @@ async function run() {
                 );
 
                 console.error(`Raw payload: ${rawPayload}`);
+                
+                console.log(`  ☠️ Message permanently failed. Sending to DLQ...`);
+                try {
+                    await producer.send({
+                        topic: 'ORDER.dlq',
+                        messages: [
+                            {
+                                key: eventId,
+                                value: JSON.stringify({
+                                    eventId,
+                                    service: 'payment-service',
+                                    error: err.message,
+                                    stack: err.stack,
+                                    originalPayload: rawPayload,
+                                    failedAt: new Date().toISOString()
+                                })
+                            }
+                        ]
+                    });
+                    console.log(`  ✅ Successfully sent event ${eventId} to ORDER.dlq`);
+                } catch (dlqErr) {
+                    console.error(`  🔥 FATAL: Failed to send to DLQ: ${dlqErr.message}`);
+                }
             }
         },
     });

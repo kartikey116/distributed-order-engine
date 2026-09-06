@@ -17,6 +17,7 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId });
+const producer = kafka.producer();
 
 const pool = new Pool({
     host: process.env.DB_HOST,
@@ -90,6 +91,7 @@ function parseEventPayload(rawValue) {
 
 async function run() {
     await consumer.connect();
+    await producer.connect();
 
     console.log(
         `✅ Inventory Service connected to Redpanda (${brokers.join(',')})`
@@ -106,15 +108,14 @@ async function run() {
 
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
+            let eventId = message.headers?.id?.toString() || 'unknown';
             const rawPayload = message.value?.toString();
 
             try {
                 const event = parseEventPayload(rawPayload);
-
-                const eventId =
-                    message.headers?.id?.toString() ||
-                    event.eventId ||
-                    'unknown';
+                if (event.eventId) {
+                    eventId = event.eventId;
+                }
 
                 const orderId = event.orderId;
 
@@ -171,6 +172,29 @@ async function run() {
                 console.error(
                     `Raw payload: ${rawPayload}`
                 );
+                
+                console.log(`  ☠️ Message permanently failed. Sending to DLQ...`);
+                try {
+                    await producer.send({
+                        topic: 'ORDER.dlq',
+                        messages: [
+                            {
+                                key: eventId,
+                                value: JSON.stringify({
+                                    eventId,
+                                    service: 'inventory-service',
+                                    error: error.message,
+                                    stack: error.stack,
+                                    originalPayload: rawPayload,
+                                    failedAt: new Date().toISOString()
+                                })
+                            }
+                        ]
+                    });
+                    console.log(`  ✅ Successfully sent event ${eventId} to ORDER.dlq`);
+                } catch (dlqErr) {
+                    console.error(`  🔥 FATAL: Failed to send to DLQ: ${dlqErr.message}`);
+                }
             }
         },
     });
